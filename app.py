@@ -96,7 +96,7 @@ def get_lyrics():
             }), 400
         
         # Appeler la fonction
-        lyrics = lyrics_function(url)
+        lyrics = lyrics_function(url=url)
         
         if not lyrics or not lyrics.strip():
             return jsonify({"error": "Aucune parole trouvée"}), 404
