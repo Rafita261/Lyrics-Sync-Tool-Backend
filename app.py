@@ -2,8 +2,11 @@ from flask import Flask, request, jsonify
 from Lyrics.tononkira import get_lyrics_in_tononkira, get_list_lyrics_in_tononkira
 from Lyrics.ovh import get_lyrics_from_ovh
 from Lyrics.lrclib import get_lyrics_from_lrclib
+from flask_cors import CORS
 
 app = Flask(__name__)
+
+CORS(app)                       
 
 @app.route("/get_lyrics_list", methods=["POST"])
 def get_lyrics_list():
