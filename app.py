@@ -5,6 +5,8 @@ from Lyrics.ovh import get_lyrics_from_ovh
 from Lyrics.lrclib import get_lyrics_from_lrclib
 import logging
 
+from Export.audio import ffmpeg_exists
+
 app = Flask(__name__)
 CORS(app)
 
@@ -111,6 +113,10 @@ def get_lyrics():
 def health():
     """Endpoint de santé pour Railway"""
     return jsonify({"status": "ok", "service": "lyrics-api"}), 200
+
+@app.route("/ffmpeg",methods = ["GET"])
+def ffmeg_verification() :
+    return jsonify({"Exists FFmpeg" : ffmpeg_exists()}), 200 
 
 @app.errorhandler(404)
 def not_found(error):
