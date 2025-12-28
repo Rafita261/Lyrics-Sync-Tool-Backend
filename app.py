@@ -1,11 +1,13 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 from Lyrics.tononkira import get_lyrics_in_tononkira, get_list_lyrics_in_tononkira
 from Lyrics.ovh import get_lyrics_from_ovh
 from Lyrics.lrclib import get_lyrics_from_lrclib
+from Export.audio import audio_to_lyrics_video, ffmpeg_exists
+from Export.video import merge_video_srt
+from Script.delete import delete_later
+import uuid
 import logging
-
-from Export.audio import ffmpeg_exists
 
 app = Flask(__name__)
 CORS(app)
@@ -118,6 +120,60 @@ def health():
 def ffmeg_verification() :
     return jsonify({"Exists FFmpeg" : ffmpeg_exists()}), 200 
 
+@app.route("/merge", methods=["POST"])
+def merge() :
+    try :
+        video = request.files['video']
+        srt = request.files['srt']
+    except Exception as e :
+        print(e)
+        return jsonify({"Erreur" : str(e)}),400
+    uid = str(uuid.uuid4())
+    v = f"tmp/{uid}.mp4"
+    s = f"tmp/{uid}.srt"
+    out = f"tmp/{uid}_out.mp4"
+
+    video.save(v)
+    srt.save(s)
+
+    merge_video_srt(v,s,out)
+
+    delete_later(out)
+    delete_later(s)
+    delete_later(v)
+
+    return send_file(out, as_attachment=True),200
+
+@app.route("/get_video_lyrics", methods=["POST"])
+def get_video_lyrics() :
+    try :
+        audio = request.files['audio']
+        srt = request.files['srt']
+        bg = request.files['bg']
+
+        uid = str(uuid.uuid4())
+        a = f"tmp/{uid}.mp3"
+        s = f"tmp/{uid}.srt"
+        b = f"tmp/{uid}.jpg"
+        out = f"tmp/{uid}_out.mp4"
+
+        audio.save(a)
+        srt.save(s)
+        bg.save(b)
+
+        audio_to_lyrics_video(a,s,b,out)
+
+        delete_later(a)
+        delete_later(s)
+        delete_later(b)
+        delete_later(out)
+
+        return send_file(out, as_attachment=True),200
+
+    except Exception as e :
+        print("Erreur : "+ str(e))
+        return jsonify({"Error" : str(e)}),500
+
 @app.errorhandler(404)
 def not_found(error):
     return jsonify({"error": "Endpoint non trouvé"}), 404
@@ -130,3 +186,6 @@ if __name__ == '__main__':
     import os
     port = int(os.environ.get('PORT', 8080))
     app.run(host="0.0.0.0", port=port, debug=False)
+
+if __name__ == '__main__' :
+    app.run(host="0.0.0.0",PORT="8080")

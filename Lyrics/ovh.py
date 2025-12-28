@@ -3,7 +3,7 @@ import requests
 def get_lyrics_from_ovh(artiste="", titre="", url=None):
     try:
         SEARCH_URL = url or "https://api.lyrics.ovh/v1/"
-        SEARCH_URL += artiste + "/" + titre
+        if artiste!="" and titre!="" : SEARCH_URL += artiste + "/" + titre
         
         response = requests.get(SEARCH_URL, timeout=15)
         
